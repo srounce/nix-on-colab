@@ -12,6 +12,8 @@ if [[ ! -d /content/user ]]; then
     echo 'colab ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 fi
 
+ls -alsph /tmp
+
 which deroot >/dev/null 2>/dev/null || {
     echo "Installing deroot wrapper script..."
     # Instalação dos scripts utilitários
