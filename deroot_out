@@ -3,7 +3,7 @@
 from getpass import getuser
 from sys import argv, stdin, stdout, stderr
 from json import load
-from subprocess import Popen
+from subprocess import run
 from os import environ
 
 if getuser() == "root":
@@ -35,7 +35,7 @@ with open(filename, 'r') as f:
     env = append_var(env, 'LIBRARY_PATH')
     env = append_var(env, 'PATH')
     env = append_var(env, 'MANPATH')
-    env.pop("LD_PRELOAD")
-    p = Popen(args['argv'], env = env, stdin = stdin, stdout = stdout, stderr = stderr)
-    p.wait()
+    if env.get("LD_PRELOAD") is not None:
+        env.pop("LD_PRELOAD")
+    run(args['argv'], env = env, stdin = stdin, stdout = stdout, stderr = stderr)
 

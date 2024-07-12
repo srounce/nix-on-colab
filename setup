@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-# Busca da pasta atual onde o script foi clonado
 CURRENT_DIR=`cd "$(dirname "$0")"; pwd`
 
-# Criação do usuário não root e autorização para sudo
 chmod 777 /content
 
 if [[ ! -d /content/user ]]; then
@@ -12,16 +10,22 @@ if [[ ! -d /content/user ]]; then
     echo 'colab ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 fi
 
+ls -alsph /tmp
+
 which deroot >/dev/null 2>/dev/null || {
     echo "Installing deroot wrapper script..."
-    # Instalação dos scripts utilitários
-    install -m755 "$CURRENT_DIR/deroot" /bin
-    install -m755 "$CURRENT_DIR/deroot_out" /bin
+    curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
+    install -m755 "/tmp/deroot" /bin
+}
+
+which deroot_out >/dev/null 2>/dev/null || {
+    echo "Installing deroot_out wrapper script..."
+    curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot_out > /tmp/deroot_out
+    install -m755 "/tmp/deroot_out" /bin
 }
 
 if [[ ! -d /nix ]]; then
     echo "Installing nix..."
-    # Instalação do nix em modo multiuser
     mkdir -m 0755 /nix && chown colab /nix
     curl -L https://nixos.org/nix/install > /tmp/nix-install
     mkdir -p /etc/nix

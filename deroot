@@ -3,7 +3,7 @@
 from tempfile import mktemp
 from json import dump
 from sys import argv, stdin, stdout, stderr
-from subprocess import Popen
+from subprocess import run
 from os import environ
 
 fname = mktemp()
@@ -14,6 +14,5 @@ for (k, v) in environ.items():
 with open(fname, 'w') as f:
     dump(state, f)
 
-p = Popen(['su', '-', 'colab', '-c', f"deroot_out {fname}"], stdin = stdin, stdout = stdout, stderr = stderr)
-p.wait()
+run(['su', '-', 'colab', '-c', f"deroot_out {fname}"], stdin = stdin, stdout = stdout, stderr = stderr)
 
