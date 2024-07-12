@@ -15,8 +15,9 @@ fi
 which deroot >/dev/null 2>/dev/null || {
     echo "Installing deroot wrapper script..."
     # Instalação dos scripts utilitários
-    install -m755 "$CURRENT_DIR/deroot" /bin
-    install -m755 "$CURRENT_DIR/deroot_out" /bin
+    curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
+    install -m755 "/tmp/deroot" /bin
+    install -m755 "/tmp/deroot_out" /bin
 }
 
 if [[ ! -d /nix ]]; then
