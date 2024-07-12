@@ -18,6 +18,7 @@ which deroot >/dev/null 2>/dev/null || {
     echo "Installing deroot wrapper script..."
     # Instalação dos scripts utilitários
     curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
+    curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot_out > /tmp/deroot_out
     install -m755 "/tmp/deroot" /bin
     install -m755 "/tmp/deroot_out" /bin
 }
