@@ -35,7 +35,8 @@ with open(filename, 'r') as f:
     env = append_var(env, 'LIBRARY_PATH')
     env = append_var(env, 'PATH')
     env = append_var(env, 'MANPATH')
-    env.pop("LD_PRELOAD")
+    if env.get("LD_PRELOAD") is not None:
+        env.pop("LD_PRELOAD")
     p = Popen(args['argv'], env = env, stdin = stdin, stdout = stdout, stderr = stderr)
     p.wait()
 
