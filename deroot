@@ -2,8 +2,10 @@
 
 from tempfile import mktemp
 from json import dump
+import sys
 from sys import argv, stdin, stdout, stderr
-from subprocess import run
+import subprocess
+from subprocess import Popen, PIPE
 from os import environ
 
 fname = mktemp()
@@ -14,5 +16,8 @@ for (k, v) in environ.items():
 with open(fname, 'w') as f:
     dump(state, f)
 
-run(['su', '-', 'colab', '-c', f"deroot_out {fname}"], stdin = stdin, stdout = stdout, stderr = stderr)
-
+p = Popen(['su', '-', 'colab', '-c', f"deroot_out {fname}"], stdin = stdin, stdout = PIPE, stderr = subprocess.STDOUT)
+for c in iter(lambda: p.stdout.read(1), b""):
+    sys.stdout.buffer.write(c)
+p.wait()
+sys.exit(p.returncode)
