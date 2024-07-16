@@ -1,23 +1,43 @@
-#!/usr/bin/env python3
+#!/usr/bin/env node
 
-from tempfile import mktemp
-from json import dump
-import sys
-from sys import argv, stdin, stdout, stderr
-import subprocess
-from subprocess import Popen, PIPE
-from os import environ
+const fs = require('fs')
+const {spawn, spawnSync} = require("child_process");
+const path = require('path');
+const OS = require("os");
 
-fname = mktemp()
-state = dict(env={}, argv=argv[1:])
-for (k, v) in environ.items():
-    state['env'][k] = v
+const tmpDir = fs.mkdtempSync(path.join(OS.tmpdir(), "deroot"))
 
-with open(fname, 'w') as f:
-    dump(state, f)
+const removeTmpDir = () => {
+  spawnSync("rm", ["-rf", tmpDir])
+}
 
-p = Popen(['su', '-', 'colab', '-c', f"deroot_out {fname}"], stdin = stdin, stdout = PIPE, stderr = subprocess.STDOUT)
-for c in iter(lambda: p.stdout.read(1), b""):
-    sys.stdout.buffer.write(c)
-p.wait()
-sys.exit(p.returncode)
+process.on("exit", () => {
+  removeTmpDir()
+})
+
+process.on("uncaughtException", () => {
+  removeTmpDir()
+})
+
+const runArgs = process.argv.slice(2)
+
+const processConfig = {
+  env: process.env,
+  args: runArgs,
+}
+
+const processConfigPath = path.join(tmpDir, "processConfig")
+fs.writeFileSync(processConfigPath, JSON.stringify(processConfig))
+fs.chmodSync(tmpDir, 777)
+fs.chmodSync(processConfigPath, 444)
+
+const runAsUser = process.env.DEROOT_USER ?? "colab"
+
+const subprocess = spawn("su", ["-", runAsUser, "-c", `deroot_out ${processConfigPath}`], {
+  stdio: [0, 1, 2],
+})
+
+subprocess.on("exit", (code) => {
+  process.exit(code)
+})
+

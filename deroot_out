@@ -1,46 +1,81 @@
-#!/usr/bin/env python3
+#!/usr/bin/env node
 
-from getpass import getuser
-import sys
-from sys import argv, stdin, stdout, stderr
-from json import load
-import subprocess
-from subprocess import Popen, PIPE
-from os import environ
+const {spawn} = require("child_process");
+const OS = require("os");
+const path = require("path");
+const fs = require("fs");
 
-if getuser() == "root":
-    raise "This script can't be run as root"
+const printErr = (message) => process.stderr.write(`${message}\n`)
 
-filename = argv[1]
+const userInfo = OS.userInfo()
 
-def append_var(env, key, sep = ":"):
-    parts = []
-    if key == "LD_LIBRARY_PATH" or key == "LIBRARY_PATH":
-        parts.append(f"{env.get('HOME')}/.nix-profile/lib")
-    if key == "PATH":
-        parts.append(f"{env.get('HOME')}/.nix-profile/bin")
-    if key == "MANPATH":
-        parts.append(f"{env.get('HOME')}/.nix-profile/share/man")
-    if environ.get(key) is not None:
-        parts.append(environ[key])
-    if env.get(key) is not None:
-        parts.append(env[key])
-    env[key] = sep.join(parts)
-    return env
+if (userInfo.username == "root") {
+  printErr(`${process.argv[1]} must not be run as root`)
+  process.exit(1)
+}
 
-with open(filename, 'r') as f:
-    args = load(f)
-    env = args['env']
-    env['HOME'] = "/content/user"
-    env = append_var(env, '__EGL_VENDOR_LIBRARY_DIRS')
-    env = append_var(env, 'LD_LIBRARY_PATH')
-    env = append_var(env, 'LIBRARY_PATH')
-    env = append_var(env, 'PATH')
-    env = append_var(env, 'MANPATH')
-    if env.get("LD_PRELOAD") is not None:
-        env.pop("LD_PRELOAD")
-    p = Popen(args['argv'], env = env, stdin = stdin, stdout = PIPE, stderr = subprocess.STDOUT)
-    for c in iter(lambda: p.stdout.read(1), b""):
-        sys.stdout.buffer.write(c)
-    p.wait()
-    sys.exit(p.returncode)
+const homeDir = process.env.HOME ?? userInfo.homedir
+
+const processConfigPath = process.argv[2]
+const processConfigContent = fs.readFileSync(processConfigPath)
+
+const processConfig = JSON.parse(processConfigContent)
+
+const runArgs = processConfig.args
+const runEnv = processConfig.env
+
+const appendEnvPath = (value, envVarName) => (envValue) => {
+  if (!value) {
+    return envValue
+  }
+
+  const envVar = envValue[envVarName]
+
+  if (!envVar) {
+    return {
+      ...envValue,
+      [envVarName]: value
+    }
+  }
+
+  const segments = envVar.split(":")
+
+  if (segments.includes(value)) {
+    return envValue
+  }
+
+  const newValue = [...segments, value]
+    .join(":")
+    .trim()
+
+  return {
+    ...envValue,
+    [envVarName]: newValue
+  }
+}
+
+const removeKeys = (keys) => (value) =>
+  Object.fromEntries(
+    Object.entries(value).filter(([k]) => !keys.includes(k))
+  )
+
+const pipe = (...ops) => (value) => ops.reduce((a, op) => op(a), value)
+
+const spawnEnv = pipe(
+  appendEnvPath(path.join(homeDir, ".nix-profile/lib"), "LD_LIBRARY_PATH"),
+  appendEnvPath(path.join(homeDir, ".nix-profile/lib"), "LIBRARY_PATH"),
+  appendEnvPath(path.join(homeDir, ".nix-profile/bin"), "PATH"),
+  appendEnvPath(path.join(homeDir, ".nix-profile/share/man"), "MANPATH"),
+  appendEnvPath(process.env.__EGL_VENDOR_LIBRARY_DIRS, "__EGL_VENDOR_LIBRARY_DIRS"),
+  removeKeys(["LD_PRELOAD"])
+)(runEnv)
+
+const subprocess = spawn(runArgs[0], runArgs.slice(1), {
+  stdio: [0, 1, 2],
+  env: spawnEnv,
+  shell: true,
+})
+
+subprocess.on("exit", (code) => {
+  process.exit(code)
+})
