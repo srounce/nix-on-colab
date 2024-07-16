@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-CURRENT_DIR=`cd "$(dirname "$0")"; pwd`
+{
+CURRENT_DIR=$(cd "$(dirname "$0")"; pwd)
 
 chmod 777 /content
 
@@ -10,22 +11,24 @@ if [[ ! -d /content/user ]]; then
     echo 'colab ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 fi
 
-which deroot >/dev/null 2>/dev/null || {
+type -p deroot &>/dev/null || {
     echo "Installing deroot wrapper script..."
-    curl -L -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
+    curl -sfL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
     install -m755 "/tmp/deroot" /bin
 }
 
-which deroot_out >/dev/null 2>/dev/null || {
+type -p deroot_out &>/dev/null || {
     echo "Installing deroot_out wrapper script..."
-    curl -L -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot_out > /tmp/deroot_out
+    curl -Lsf -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot_out > /tmp/deroot_out
     install -m755 "/tmp/deroot_out" /bin
 }
+
+echo "Using NodeJS: $(type -p node)"
 
 if [[ ! -d /nix ]]; then
     echo "Installing nix..."
     mkdir -m 0755 /nix && chown colab /nix
-    curl -L https://nixos.org/nix/install > /tmp/nix-install
+    curl -Lsf https://nixos.org/nix/install > /tmp/nix-install
     mkdir -p /etc/nix
     echo 'sandbox = false' > /etc/nix/nix.conf
     yes y | deroot sh /tmp/nix-install # --daemon
@@ -33,4 +36,4 @@ if [[ ! -d /nix ]]; then
     echo 'sandbox = false' >> /etc/nix/nix.conf
     echo 'trusted-users = colab root @wheel' >> /etc/nix/nix.conf
 fi
-
+}
