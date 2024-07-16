@@ -27,13 +27,13 @@ echo "Using NodeJS: $(type -p node)"
 
 if [[ ! -d /nix ]]; then
     echo "Installing nix..."
-    mkdir -m 0755 /nix && chown colab /nix
+    #mkdir -m 0755 /nix && chown colab /nix
     curl -Lsf https://nixos.org/nix/install > /tmp/nix-install
-    mkdir -p /etc/nix
-    echo 'sandbox = false' > /etc/nix/nix.conf
-    yes y | deroot sh /tmp/nix-install # --daemon
-    echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf
-    echo 'sandbox = false' >> /etc/nix/nix.conf
-    echo 'trusted-users = colab root @wheel' >> /etc/nix/nix.conf
+    #mkdir -p /etc/nix
+    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm
+    #yes y | deroot sh /tmp/nix-install # --daemon
+    #echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf
+    #echo 'sandbox = false' >> /etc/nix/nix.conf
+    #echo 'trusted-users = colab root @wheel' >> /etc/nix/nix.conf
 fi
 }
