@@ -12,13 +12,13 @@ fi
 
 which deroot >/dev/null 2>/dev/null || {
     echo "Installing deroot wrapper script..."
-    curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
+    curl -L -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot > /tmp/deroot
     install -m755 "/tmp/deroot" /bin
 }
 
 which deroot_out >/dev/null 2>/dev/null || {
     echo "Installing deroot_out wrapper script..."
-    curl -L https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot_out > /tmp/deroot_out
+    curl -L -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/srounce/nix-on-colab/master/deroot_out > /tmp/deroot_out
     install -m755 "/tmp/deroot_out" /bin
 }
 
